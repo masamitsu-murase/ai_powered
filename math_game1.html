@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+  <title>左右対面 速押し 算数ゲーム（単一ファイル）</title>
+  <style>
+    :root{ --bg:#0f172a; --panel:#0b1220; --accent:#06f; --ok:#16a34a; --bad:#ef4444; --text:#e6eef8 }
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN',Meiryo,sans-serif;background:linear-gradient(180deg,#071124 0%, #092036 100%);color:var(--text)}
+    .wrap{height:100%;display:flex;flex-direction:column}
+    header{padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    header h1{font-size:1rem;margin:0}
+    .controls{display:flex;gap:8px;align-items:center}
+    .controls input[type=number]{width:76px;padding:6px;border-radius:8px;border:none;background:#071827;color:var(--text);text-align:center}
+    .controls button{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:#001;font-weight:600}
+
+    main{flex:1;display:flex;align-items:stretch}
+    .side{flex:1;display:flex;flex-direction:column;align-items:stretch;padding:12px;box-sizing:border-box}
+    .left{border-right:4px solid rgba(255,255,255,0.03)}
+    .right{border-left:4px solid rgba(255,255,255,0.03)}
+
+    .playerHeader{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,0.02);margin-bottom:8px}
+    .playerHeader .name{font-size:1.1rem;font-weight:700}
+    .score{font-size:1.2rem;font-weight:800}
+
+    .questionArea{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+    .questionCard{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:18px;border-radius:14px;min-width:260px;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,0.45)}
+    .question{font-size:2.6rem;font-weight:900}
+    .sub{font-size:0.9rem;opacity:0.8}
+
+    .buttonsGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+    .ansBtn{padding:14px;border-radius:10px;border:none;font-size:1.1rem;font-weight:700;touch-action:manipulation;background:#071827;color:var(--text);box-shadow:0 6px 12px rgba(0,0,0,0.5)}
+    .ansBtn:active{transform:translateY(1px)}
+
+    footer{padding:8px 12px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+
+    /* large touch targets for tablet */
+    @media (min-width:900px){
+      .question{font-size:4rem}
+      .ansBtn{padding:18px;font-size:1.3rem}
+      .buttonsGrid{grid-template-columns:repeat(5,1fr)}
+    }
+
+    .msg{margin-top:12px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:600}
+    .winnerOverlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,23,0.75), rgba(2,6,23,0.88));z-index:40}
+    .winCard{padding:20px;border-radius:14px;background:#021026;color:var(--text);text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
+    .small{font-size:0.9rem;opacity:0.9}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>左右対面 速押し 算数ゲーム</h1>
+      <div class="controls">
+        <label for="problems">問題数</label>
+        <input id="problems" type="number" min="1" max="100" value="10" />
+        <button id="start">スタート</button>
+        <button id="reset" disabled>リセット</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="side left" id="leftSide">
+        <div class="playerHeader">
+          <div class="name">左プレイヤー</div>
+          <div class="score" id="scoreL">0</div>
+        </div>
+        <div class="questionArea">
+          <div class="questionCard">
+            <div class="question" id="question">--</div>
+            <div class="sub" id="subLeft">準備してください</div>
+          </div>
+          <div class="msg" id="msgLeft">ボタンを押して答えます</div>
+        </div>
+        <div style="margin-top:8px">
+          <div class="buttonsGrid" id="buttonsL"></div>
+        </div>
+      </section>
+
+      <section class="side right" id="rightSide">
+        <div class="playerHeader">
+          <div class="name">右プレイヤー</div>
+          <div class="score" id="scoreR">0</div>
+        </div>
+        <div class="questionArea">
+          <div class="questionCard">
+            <div class="question" id="questionMirror">--</div>
+            <div class="sub" id="subRight">準備してください</div>
+          </div>
+          <div class="msg" id="msgRight">ボタンを押して答えます</div>
+        </div>
+        <div style="margin-top:8px">
+          <div class="buttonsGrid" id="buttonsR"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div id="progress">0 / 0</div>
+      <div id="status">準備完了 ? スタートを押してください</div>
+    </footer>
+  </div>
+
+  <div id="winner" class="winnerOverlay hidden">
+    <div class="winCard">
+      <div id="winnerText" style="font-size:1.6rem;font-weight:900">Winner</div>
+      <div class="small" style="margin-top:8px">もう一度遊ぶにはリセットを押してください</div>
+    </div>
+  </div>
+
+  <script>
+    // シンプルな単一ファイルのロジック
+    const buttonsL = document.getElementById('buttonsL');
+    const buttonsR = document.getElementById('buttonsR');
+    const questionEl = document.getElementById('question');
+    const questionMirror = document.getElementById('questionMirror');
+    const scoreL = document.getElementById('scoreL');
+    const scoreR = document.getElementById('scoreR');
+    const startBtn = document.getElementById('start');
+    const resetBtn = document.getElementById('reset');
+    const problemsInput = document.getElementById('problems');
+    const progress = document.getElementById('progress');
+    const status = document.getElementById('status');
+    const subLeft = document.getElementById('subLeft');
+    const subRight = document.getElementById('subRight');
+    const msgLeft = document.getElementById('msgLeft');
+    const msgRight = document.getElementById('msgRight');
+    const winner = document.getElementById('winner');
+    const winnerText = document.getElementById('winnerText');
+
+    // 状態
+    let totalProblems = 10;
+    let current = 0;
+    let score = {L:0,R:0};
+    let correctAnswer = null;
+    let waiting = false; // 問題表示中で解答待ち
+    let answers = {L:null, R:null};
+    let timestamps = {L:0,R:0};
+
+    // ボタン作成
+    function makeButtons(container, side){
+      container.innerHTML = '';
+      for(let i=1;i<=20;i++){
+        const b = document.createElement('button');
+        b.className = 'ansBtn';
+        b.textContent = i;
+        b.dataset.val = i;
+        b.addEventListener('click', ()=> onAnswer(side, i, b));
+        container.appendChild(b);
+      }
+    }
+
+    makeButtons(buttonsL, 'L');
+    makeButtons(buttonsR, 'R');
+
+    function onAnswer(side, val, btn){
+      if(!waiting) return;
+      // 2人が同時に押せるように各自の最初の押下を記録
+      if(answers[side] !== null) return; // 二回目は無視
+      answers[side] = val;
+      timestamps[side] = performance.now();
+
+      // 見た目フィードバック
+      btn.style.boxShadow = '0 3px 8px rgba(0,0,0,0.6) inset';
+      if(val === correctAnswer){
+        btn.style.border = '3px solid var(--ok)';
+      } else {
+        btn.style.border = '3px solid var(--bad)';
+      }
+
+      checkRoundEnd();
+    }
+
+    function checkRoundEnd(){
+      // 両者が回答したか、片方正解で相手が押す前に正解確定（早押し）
+      const L = answers.L, R = answers.R;
+      // 片方が正解で他がまだ未回答 -> 相手に最後まで待たせたくないので短時間で終了
+      if((L === correctAnswer && R === null) || (R === correctAnswer && L === null)){
+        // 小さな猶予で決着（200ms）
+        setTimeout(()=> finalizeRound(), 200);
+        return;
+      }
+      if(L !== null && R !== null){
+        finalizeRound();
+      }
+    }
+
+    function finalizeRound(){
+      if(!waiting) return;
+      waiting = false;
+      // 判定
+      const Lval = answers.L, Rval = answers.R;
+      let winnerSide = null;
+      if(Lval === correctAnswer && Rval === correctAnswer){
+        // 両方正解 -> 速い方
+        winnerSide = timestamps.L < timestamps.R ? 'L' : (timestamps.R < timestamps.L ? 'R' : null);
+      } else if(Lval === correctAnswer){
+        winnerSide = 'L';
+      } else if(Rval === correctAnswer){
+        winnerSide = 'R';
+      }
+
+      if(winnerSide){
+        score[winnerSide]++;
+        scoreL.textContent = score.L;
+        scoreR.textContent = score.R;
+        status.textContent = (winnerSide === 'L' ? '左' : '右') + 'の勝ち！ 正解: ' + correctAnswer;
+      } else {
+        status.textContent = '正解なし。 正解: ' + correctAnswer;
+      }
+
+      current++;
+      progress.textContent = `${current} / ${totalProblems}`;
+
+      // 次の問題へ少し待ってから移行
+      setTimeout(()=>{
+        resetButtonsVisual();
+        if(current >= totalProblems){
+          showFinalResult();
+        } else {
+          nextQuestion();
+        }
+      }, 400);
+    }
+
+    function resetButtonsVisual(){
+      document.querySelectorAll('.ansBtn').forEach(b=>{
+        b.style.border='';
+        b.style.boxShadow='';
+      });
+    }
+
+    function showFinalResult(){
+      resetBtn.disabled = false;
+      startBtn.disabled = false;
+      let text = '';
+      if(score.L > score.R) text = '左プレイヤーの勝利！\n' + score.L + ' : ' + score.R;
+      else if(score.R > score.L) text = '右プレイヤーの勝利！\n' + score.R + ' : ' + score.L;
+      else text = '引き分け！\n' + score.L + ' : ' + score.R;
+      winnerText.textContent = text;
+      winner.classList.remove('hidden');
+      status.textContent = 'ゲーム終了';
+    }
+
+    function nextQuestion(){
+      answers = {L:null,R:null};
+      timestamps = {L:0,R:0};
+      correctAnswer = null;
+      waiting = true;
+      // 問題作成
+      const q = makeProblem();
+      correctAnswer = q.answer;
+      questionEl.textContent = q.text;
+      questionMirror.textContent = q.text; // 両側に同じ問題
+      subLeft.textContent = `問題 ${current+1} ／ ${totalProblems}`;
+      subRight.textContent = `問題 ${current+1} ／ ${totalProblems}`;
+      status.textContent = '解答を押してください！';
+      progress.textContent = `${current} / ${totalProblems}`;
+    }
+
+    function makeProblem(){
+      // 一桁の足し算か引き算（0-9）をランダムに作る。ただし答えが1..20に入るようにフィルタ
+      while(true){
+        const a = Math.floor(Math.random()*10); // 0..9
+        const b = Math.floor(Math.random()*10);
+        const op = Math.random() < 0.5 ? '+' : '-';
+        let ans = (op === '+') ? a + b : a - b;
+        if(ans >= 1 && ans <= 20){
+          const text = `${a} ${op} ${b} = ?`;
+          return {text, answer:ans};
+        }
+        // else 再試行
+      }
+    }
+
+    startBtn.addEventListener('click', ()=>{
+      totalProblems = Math.max(1, Math.min(100, Number(problemsInput.value) || 10));
+      current = 0;
+      score = {L:0,R:0};
+      scoreL.textContent = '0'; scoreR.textContent = '0';
+      progress.textContent = `0 / ${totalProblems}`;
+      status.textContent = 'スタート！';
+      resetBtn.disabled = true;
+      startBtn.disabled = true;
+      winner.classList.add('hidden');
+      // 最初の問題をすぐ出す
+      setTimeout(()=> nextQuestion(), 400);
+    });
+
+    resetBtn.addEventListener('click', ()=>{
+      // 初期化
+      current = 0; totalProblems = Number(problemsInput.value) || 10;
+      score = {L:0,R:0}; scoreL.textContent = '0'; scoreR.textContent = '0';
+      status.textContent = 'リセットしました。スタートを押してください';
+      questionEl.textContent = '--'; questionMirror.textContent = '--';
+      progress.textContent = `0 / ${totalProblems}`;
+      resetButtonsVisual();
+      winner.classList.add('hidden');
+      resetBtn.disabled = true;
+      startBtn.disabled = false;
+      waiting = false;
+    });
+
+    // ゲーム終了時にリセットボタンを有効にするため、winnerクリックで閉じる
+    winner.addEventListener('click', ()=>{
+      winner.classList.add('hidden');
+      resetBtn.disabled = false;
+    });
+
+    // タッチ時に早く反応するための設定（不要かもしれないが冗長防止）
+    document.addEventListener('touchstart', ()=>{}, {passive:true});
+
+    // 初期UI
+    progress.textContent = `0 / ${totalProblems}`;
+    status.textContent = '準備完了 ? スタートを押してください';
+    subLeft.textContent = subRight.textContent = '';
+  </script>
+</body>
+</html>
