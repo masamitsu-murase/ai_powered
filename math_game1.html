@@ -135,7 +135,7 @@
     // ボタン作成
     function makeButtons(container, side){
       container.innerHTML = '';
-      for(let i=1;i<=20;i++){
+      for(let i=1;i<=15;i++){
         const b = document.createElement('button');
         b.className = 'ansBtn';
         b.textContent = i;
@@ -254,13 +254,13 @@
     }
 
     function makeProblem(){
-      // 一桁の足し算か引き算（0-9）をランダムに作る。ただし答えが1..20に入るようにフィルタ
+      // 一桁の足し算か引き算（0-9）をランダムに作る。ただし答えが1..15に入るようにフィルタ
       while(true){
         const a = Math.floor(Math.random()*10); // 0..9
         const b = Math.floor(Math.random()*10);
         const op = Math.random() < 0.5 ? '+' : '-';
         let ans = (op === '+') ? a + b : a - b;
-        if(ans >= 1 && ans <= 20){
+        if(ans >= 1 && ans <= 15){
           const text = `${a} ${op} ${b} = ?`;
           return {text, answer:ans};
         }
