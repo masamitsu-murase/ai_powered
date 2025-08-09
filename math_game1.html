@@ -40,8 +40,6 @@
       .ansBtn{padding:18px;font-size:1.3rem}
       .buttonsGrid{grid-template-columns:repeat(5,1fr)}
     }
-
-    .msg{margin-top:12px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:600}
     .winnerOverlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,23,0.75), rgba(2,6,23,0.88));z-index:40}
     .winCard{padding:20px;border-radius:14px;background:#021026;color:var(--text);text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
     .small{font-size:0.9rem;opacity:0.9}
@@ -71,7 +69,6 @@
             <div class="question" id="question">--</div>
             <div class="sub" id="subLeft">準備してください</div>
           </div>
-          <div class="msg" id="msgLeft">ボタンを押して答えます</div>
         </div>
         <div style="margin-top:8px">
           <div class="buttonsGrid" id="buttonsL"></div>
@@ -88,7 +85,6 @@
             <div class="question" id="questionMirror">--</div>
             <div class="sub" id="subRight">準備してください</div>
           </div>
-          <div class="msg" id="msgRight">ボタンを押して答えます</div>
         </div>
         <div style="margin-top:8px">
           <div class="buttonsGrid" id="buttonsR"></div>
@@ -124,8 +120,6 @@
     const status = document.getElementById('status');
     const subLeft = document.getElementById('subLeft');
     const subRight = document.getElementById('subRight');
-    const msgLeft = document.getElementById('msgLeft');
-    const msgRight = document.getElementById('msgRight');
     const winner = document.getElementById('winner');
     const winnerText = document.getElementById('winnerText');
 
