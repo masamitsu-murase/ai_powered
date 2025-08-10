@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+  <title>左右対面 速押し 算数ゲーム（単一ファイル）</title>
+  <style>
+    :root{ --bg:#0f172a; --panel:#0b1220; --accent:#06f; --ok:#16a34a; --bad:#ef4444; --text:#e6eef8 }
+    html,body{overflow-x:hidden; height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN',Meiryo,sans-serif;background:linear-gradient(180deg,#071124 0%, #092036 100%);color:var(--text)}
+    .wrap {
+      height: 100%;
+      width: 100vw;
+      min-height: 100vh;
+      position: relative;
+      display: block;
+    }
+    main {
+      width: 100vw;
+      min-height: 70vh;
+      position: relative;
+      display: block;
+    }
+    .side {
+      width: 48vw;
+      min-height: 60vh;
+      position: absolute;
+      top: 0;
+      display: block;
+      box-sizing: border-box;
+      padding: 12px;
+    }
+    .left {
+      left: 0;
+      border-right: 4px solid rgba(255,255,255,0.03);
+    }
+    .right {
+      right: 0;
+      border-left: 4px solid rgba(255,255,255,0.03);
+    }
+    .playerHeader {
+      width: 100%;
+      position: relative;
+      display: block;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 10px;
+      padding: 6px 8px;
+    }
+    .playerHeader .name {
+      display: block;
+      float: left;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .score {
+      float: right;
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+    .questionArea {
+      width: 100%;
+      min-height: 120px;
+      display: block;
+      text-align: center;
+      margin: 0 auto 10px auto;
+      position: relative;
+    }
+    .questionCard {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      padding: 18px;
+      border-radius: 14px;
+      min-width: 260px;
+      text-align: center;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+      display: block;
+      margin: 0 auto;
+    }
+    .question {
+      font-size: 2.6rem;
+      font-weight: 900;
+      display: block;
+    }
+    .buttonsGrid {
+      width: 100%;
+      margin-top: 14px;
+      display: block;
+      text-align: center;
+    }
+    .buttonsGrid table {
+      margin: 0 auto;
+      border-spacing: 8px;
+      border-collapse: separate;
+    }
+    .ansBtn {
+      width: 8vw;
+      height: 8vw;
+      min-width: 48px;
+      min-height: 48px;
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+      display: block;
+      border-radius: 10px;
+      border: 3px solid transparent;
+      font-size: 1.1rem;
+      font-weight: 700;
+      touch-action: manipulation;
+      background: #071827;
+      color: var(--text);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+      transition: border 0.1s, box-shadow 0.1s;
+    }
+    .ansBtn:active {
+      transform: translateY(1px);
+    }
+    footer {
+      width: 100vw;
+      padding: 8px 12px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      display: block;
+      box-sizing: border-box;
+      z-index: 20;
+    }
+    #progress, #status {
+      display: inline;
+      margin-right: 12px;
+    }
+    .winnerOverlay{position:fixed;top:0px;left:0px;bottom:0px;right:0px;inset:0;display:block;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,23,0.75), rgba(2,6,23,0.88));z-index:40}
+    .winCard{padding:20px;border-radius:14px;background:#021026;color:var(--text);text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
+    .small{font-size:0.9rem;opacity:0.9}
+    .hidden{display:none}
+    /* large touch targets for tablet */
+    @media (min-width:900px){
+      .question{font-size:4rem}
+      .ansBtn{font-size:1.3rem}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main>
+      <section class="side left" id="leftSide">
+        <div class="playerHeader">
+          <div class="name">ひだり</div>
+          <div class="score" id="scoreL">0</div>
+        </div>
+        <div class="questionArea">
+          <div class="questionCard">
+            <div class="question" id="question">--</div>
+          </div>
+        </div>
+        <div>
+          <div class="buttonsGrid" id="buttonsL"></div>
+        </div>
+      </section>
+
+      <section class="side right" id="rightSide">
+        <div class="playerHeader">
+          <div class="name">みぎ</div>
+          <div class="score" id="scoreR">0</div>
+        </div>
+        <div class="questionArea">
+          <div class="questionCard">
+            <div class="question" id="questionMirror">--</div>
+          </div>
+        </div>
+        <div>
+          <div class="buttonsGrid" id="buttonsR"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div id="progress">0 / 0</div>
+      <div id="status">初期値</div>
+    </footer>
+  </div>
+
+  <div id="winner" class="winnerOverlay hidden">
+    <div class="winCard">
+      <div id="winnerText" style="font-size:1.6rem;font-weight:900">Winner</div>
+      <br />
+      <button style="font-size:1.1rem;padding:10px 24px;border-radius:10px;border:none;background:var(--accent);color:#001;font-weight:700;cursor:pointer">もういちど あそぶ</button>
+    </div>
+  </div>
+
+  <div id="startDialog" class="winnerOverlay">
+    <div class="winCard">
+      <div style="font-size:1.3rem;font-weight:700;margin-bottom:16px">もんだいは いくつにしますか？</div>
+      <select id="dialogProblems" style="font-size:1.3rem;width:90px;text-align:center;padding:8px;border-radius:8px;border:none;background:#071827;color:var(--text);margin-bottom:18px;">
+        <!-- options will be generated by JS -->
+      </select>
+      <br />
+      <button id="dialogStartBtn" style="font-size:1.1rem;padding:10px 24px;border-radius:10px;border:none;background:var(--accent);color:#001;font-weight:700;cursor:pointer">ゲームを はじめる</button>
+    </div>
+  </div>
+
+  <div id="countDownDialog" class="winnerOverlay hidden">
+    <div class="winCard">
+      <div id="countDown" style="font-size:4rem;font-weight:900">3</div>
+    </div>
+  </div>
+
+  <!-- script type="text/javascript">
+    // シンプルな単一ファイルのロジック
+    const buttonsL = document.getElementById('buttonsL');
+    const buttonsR = document.getElementById('buttonsR');
+    const questionEl = document.getElementById('question');
+    const questionMirror = document.getElementById('questionMirror');
+    const scoreL = document.getElementById('scoreL');
+    const scoreR = document.getElementById('scoreR');
+    const progress = document.getElementById('progress');
+    const status = document.getElementById('status');
+    const winner = document.getElementById('winner');
+    const winnerText = document.getElementById('winnerText');
+    const startDialog = document.getElementById('startDialog');
+    const countDownDialog = document.getElementById('countDownDialog');
+    const countDown = document.getElementById('countDown');
+    const dialogProblems = document.getElementById('dialogProblems');
+    const dialogStartBtn = document.getElementById('dialogStartBtn');
+
+    // 状態
+    let totalProblems = 10;
+    let current = 0;
+    let score = {L:0,R:0};
+    let correctAnswer = null;
+    let waiting = false; // 問題表示中で解答待ち
+    let answers = {L:null, R:null};
+    let timestamps = {L:0,R:0};
+
+    // ボタン作成
+    function makeButtons(container, side){
+      container.innerHTML = '';
+      // table要素を作成
+      const table = document.createElement('table');
+      table.style.margin = '0 auto';
+      table.style.borderCollapse = 'separate';
+      table.style.borderSpacing = '8px';
+      let num = 1;
+      for(let row=0; row<3; row++){
+        const tr = document.createElement('tr');
+        for(let col=0; col<5; col++){
+          const td = document.createElement('td');
+          if(num <= 15){
+            const b = document.createElement('button');
+            b.className = 'ansBtn';
+            b.textContent = num;
+            b.dataset.val = num;
+            (function(n){
+              b.addEventListener('click', function(){ onAnswer(side, n, b) });
+            })(num);
+            td.appendChild(b);
+            num++;
+          }
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
+      }
+      container.appendChild(table);
+    }
+
+    makeButtons(buttonsL, 'L');
+    makeButtons(buttonsR, 'R');
+
+    function onAnswer(side, val, btn){
+      if(!waiting) return;
+      // 2人が同時に押せるように各自の最初の押下を記録
+      if(answers[side] !== null) return; // 二回目は無視
+      answers[side] = val;
+      timestamps[side] = performance.now();
+
+      // 見た目フィードバック
+      btn.style.boxShadow = '0 3px 8px rgba(0,0,0,0.6) inset';
+      if(val === correctAnswer){
+        btn.style.border = '3px solid var(--ok)';
+      } else {
+        btn.style.border = '3px solid var(--bad)';
+      }
+
+      checkRoundEnd();
+    }
+
+    function checkRoundEnd(){
+      // 両者が回答したか、片方正解で相手が押す前に正解確定（早押し）
+      const L = answers.L, R = answers.R;
+      // 片方が正解で他がまだ未回答 -> 相手に最後まで待たせたくないので短時間で終了
+      if((L === correctAnswer && R === null) || (R === correctAnswer && L === null)){
+        // 小さな猶予で決着（200ms）
+        setTimeout(function(){ finalizeRound() }, 200);
+        return;
+      }
+      if(L !== null && R !== null){
+        finalizeRound();
+      }
+    }
+
+    function finalizeRound(){
+      if(!waiting) return;
+      waiting = false;
+      // 判定
+      const Lval = answers.L, Rval = answers.R;
+      let winnerSide = null;
+      if(Lval === correctAnswer && Rval === correctAnswer){
+        // 両方正解 -> 速い方
+        winnerSide = timestamps.L < timestamps.R ? 'L' : (timestamps.R < timestamps.L ? 'R' : null);
+      } else if(Lval === correctAnswer){
+        winnerSide = 'L';
+      } else if(Rval === correctAnswer){
+        winnerSide = 'R';
+      }
+
+      if(winnerSide){
+        score[winnerSide]++;
+        scoreL.textContent = score.L;
+        scoreR.textContent = score.R;
+        status.textContent = (winnerSide === 'L' ? '左' : '右') + 'の勝ち！ 正解: ' + correctAnswer;
+      } else {
+        status.textContent = '正解なし。 正解: ' + correctAnswer;
+      }
+
+      current++;
+      progress.textContent = `${current} / ${totalProblems}`;
+
+      // 次の問題へ少し待ってから移行
+      setTimeout(function() {
+        resetButtonsVisual();
+        if(current >= totalProblems){
+          showFinalResult();
+        } else {
+          nextQuestion();
+        }
+      }, 400);
+    }
+
+    function resetButtonsVisual(){
+      Array.from(document.querySelectorAll('.ansBtn')).forEach(function(b) {
+        b.style.border='';
+        b.style.boxShadow='';
+      });
+    }
+
+    function showFinalResult(){
+      let text = '';
+      if(score.L > score.R) text = 'ひだりの かち！ ' + score.L + ' : ' + score.R;
+      else if(score.R > score.L) text = 'みぎの かち！ ' + score.R + ' : ' + score.L;
+      else text = 'ひきわけ ' + score.L + ' : ' + score.R;
+      winnerText.textContent = text;
+      winner.classList.remove('hidden');
+      status.textContent = 'ゲーム終了';
+    }
+
+    function nextQuestion(){
+      answers = {L:null,R:null};
+      timestamps = {L:0,R:0};
+      correctAnswer = null;
+      waiting = true;
+      // 問題作成
+      const q = makeProblem();
+      correctAnswer = q.answer;
+      questionEl.textContent = q.text;
+      questionMirror.textContent = q.text; // 両側に同じ問題
+      status.textContent = '解答を押してください！';
+      progress.textContent = `${current+1} / ${totalProblems}`;
+    }
+
+    function makeProblem(){
+      // 一桁の足し算か引き算（0-9）をランダムに作る。ただし答えが1..15に入るようにフィルタ
+      while(true){
+        const a = Math.floor(Math.random()*10); // 0..9
+        const b = Math.floor(Math.random()*10);
+        const op = Math.random() < 0.5 ? '+' : '-';
+        let ans = (op === '+') ? a + b : a - b;
+        if(ans >= 1 && ans <= 15){
+          const text = `${a} ${op} ${b} = ?`;
+          return {text, answer:ans};
+        }
+        // else 再試行
+      }
+    }
+
+    function startGame(problems){
+      totalProblems = problems;
+      current = 0;
+      score = {L:0,R:0};
+      scoreL.textContent = '0'; scoreR.textContent = '0';
+      progress.textContent = `0 / ${totalProblems}`;
+      status.textContent = 'スタート！';
+      winner.classList.add('hidden');
+      // 最初の問題をすぐ出す
+      setTimeout(function() { nextQuestion(); }, 400);
+    }
+
+    // ゲーム終了時にリセットボタンを有効にするため、winnerクリックで閉じる
+    winner.addEventListener('click', function() {
+      winner.classList.add('hidden');
+      showStartDialog();
+    });
+
+    // タッチ時に早く反応するための設定（不要かもしれないが冗長防止）
+    document.addEventListener('touchstart', function() {}, {passive:true});
+
+    // 初期UI
+    progress.textContent = `0 / ${totalProblems}`;
+    status.textContent = '準備完了 ? スタートを押してください';
+
+    // 初期ダイアログの制御
+    function showStartDialog() {
+      startDialog.classList.remove('hidden');
+    }
+    function hideStartDialog() {
+      startDialog.classList.add('hidden');
+    }
+    function showCountDownDialog() {
+      countDown.textContent = '3'; // 初期値
+      countDownDialog.classList.remove('hidden');
+    }
+    function hideCountDownDialog() {
+      countDownDialog.classList.add('hidden');
+    }
+    function startCountDown(problems) {
+      showCountDownDialog();
+      let count = 2;
+      let countDownCallback = function() {
+        if (count > 0) {
+          status.textContent = `ゲーム開始まで ${count}...`;
+          countDown.textContent = `${count}`;
+          count--;
+          setTimeout(countDownCallback, 1000);
+        } else {
+          status.textContent = `スタート`;
+          countDown.textContent = `スタート`;
+          setTimeout(function() {
+            status.textContent = '解答を押してください！';
+            hideCountDownDialog();
+            startGame(problems);
+          }, 1000);
+        }
+      };
+      setTimeout(countDownCallback, 1000);
+    }
+    // ゲーム開始時のダイアログから値を反映
+    dialogStartBtn.addEventListener('click', function() {
+      let val = Number(dialogProblems.value) || 10;
+      hideStartDialog();
+      startCountDown(val);
+    });
+
+    // セレクトボックスの選択肢を生成
+    for(let i=1;i<=40;i++){
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = i;
+      if(i === 10) opt.selected = true;
+      dialogProblems.appendChild(opt);
+    }
+
+    // ページロード時にダイアログ表示
+    showStartDialog();
+  </script -->
+  <script type="text/javascript">
+window.onerror = function(a, b, c, d, e) {
+  var message = "";
+  message += "message: " + a + " ";
+  message += "source: " + b + " ";
+  message += "lineno: " + c + " ";
+  message += "colno: " + d + " ";
+  message += "error: " + e + " ";
+  document.getElementById("status").textContent = message;
+
+  return true;
+};
+window.addEventListener('touchmove', function(event) {
+  event.preventDefault();
+});
+  </script>
+
+  <script type="text/javascript">
+// シンプルな単一ファイルのロジック
+var buttonsL = document.getElementById('buttonsL');
+var buttonsR = document.getElementById('buttonsR');
+var questionEl = document.getElementById('question');
+var questionMirror = document.getElementById('questionMirror');
+var scoreL = document.getElementById('scoreL');
+var scoreR = document.getElementById('scoreR');
+var progress = document.getElementById('progress');
+var status = document.getElementById('status');
+var winner = document.getElementById('winner');
+var winnerText = document.getElementById('winnerText');
+var startDialog = document.getElementById('startDialog');
+var countDownDialog = document.getElementById('countDownDialog');
+var countDown = document.getElementById('countDown');
+var dialogProblems = document.getElementById('dialogProblems');
+var dialogStartBtn = document.getElementById('dialogStartBtn');
+// 状態
+var totalProblems = 10;
+var current = 0;
+var score = {
+  L: 0,
+  R: 0
+};
+var correctAnswer = null;
+var waiting = false; // 問題表示中で解答待ち
+var answers = {
+  L: null,
+  R: null
+};
+var timestamps = {
+  L: 0,
+  R: 0
+};
+// ボタン作成
+function makeButtons(container, side) {
+  container.innerHTML = '';
+  // table要素を作成
+  var table = document.createElement('table');
+  table.style.margin = '0 auto';
+  table.style.borderCollapse = 'separate';
+  table.style.borderSpacing = '8px';
+  var num = 1;
+  for (var row = 0; row < 3; row++) {
+    var tr = document.createElement('tr');
+    var _loop = function _loop() {
+      var td = document.createElement('td');
+      if (num <= 15) {
+        var b = document.createElement('button');
+        b.className = 'ansBtn';
+        b.textContent = num;
+        b.dataset.val = num;
+        (function (n) {
+          b.addEventListener('click', function () {
+            onAnswer(side, n, b);
+          });
+        })(num);
+        td.appendChild(b);
+        num++;
+      }
+      tr.appendChild(td);
+    };
+    for (var col = 0; col < 5; col++) {
+      _loop();
+    }
+    table.appendChild(tr);
+  }
+  container.appendChild(table);
+}
+makeButtons(buttonsL, 'L');
+makeButtons(buttonsR, 'R');
+function onAnswer(side, val, btn) {
+  if (!waiting) return;
+  // 2人が同時に押せるように各自の最初の押下を記録
+  if (answers[side] !== null) return; // 二回目は無視
+  answers[side] = val;
+  timestamps[side] = performance.now();
+
+  // 見た目フィードバック
+  btn.style.boxShadow = '0 3px 8px rgba(0,0,0,0.6) inset';
+  if (val === correctAnswer) {
+    btn.style.border = '3px solid var(--ok)';
+  } else {
+    btn.style.border = '3px solid var(--bad)';
+  }
+  checkRoundEnd();
+}
+function checkRoundEnd() {
+  // 両者が回答したか、片方正解で相手が押す前に正解確定（早押し）
+  var L = answers.L,
+    R = answers.R;
+  // 片方が正解で他がまだ未回答 -> 相手に最後まで待たせたくないので短時間で終了
+  if (L === correctAnswer && R === null || R === correctAnswer && L === null) {
+    // 小さな猶予で決着（200ms）
+    setTimeout(function () {
+      finalizeRound();
+    }, 200);
+    return;
+  }
+  if (L !== null && R !== null) {
+    finalizeRound();
+  }
+}
+function finalizeRound() {
+  if (!waiting) return;
+  waiting = false;
+  // 判定
+  var Lval = answers.L,
+    Rval = answers.R;
+  var winnerSide = null;
+  if (Lval === correctAnswer && Rval === correctAnswer) {
+    // 両方正解 -> 速い方
+    winnerSide = timestamps.L < timestamps.R ? 'L' : timestamps.R < timestamps.L ? 'R' : null;
+  } else if (Lval === correctAnswer) {
+    winnerSide = 'L';
+  } else if (Rval === correctAnswer) {
+    winnerSide = 'R';
+  }
+  if (winnerSide) {
+    score[winnerSide]++;
+    scoreL.textContent = score.L;
+    scoreR.textContent = score.R;
+    status.textContent = (winnerSide === 'L' ? '左' : '右') + 'の勝ち！ 正解: ' + correctAnswer;
+  } else {
+    status.textContent = '正解なし。 正解: ' + correctAnswer;
+  }
+  current++;
+  progress.textContent = "".concat(current, " / ").concat(totalProblems);
+
+  // 次の問題へ少し待ってから移行
+  setTimeout(function () {
+    resetButtonsVisual();
+    if (current >= totalProblems) {
+      showFinalResult();
+    } else {
+      nextQuestion();
+    }
+  }, 400);
+}
+function resetButtonsVisual() {
+  Array.from(document.querySelectorAll('.ansBtn')).forEach(function (b) {
+    b.style.border = '';
+    b.style.boxShadow = '';
+  });
+}
+function showFinalResult() {
+  var text = '';
+  if (score.L > score.R) text = 'ひだりの かち！ ' + score.L + ' : ' + score.R;else if (score.R > score.L) text = 'みぎの かち！ ' + score.R + ' : ' + score.L;else text = 'ひきわけ ' + score.L + ' : ' + score.R;
+  winnerText.textContent = text;
+  winner.classList.remove('hidden');
+  status.textContent = 'ゲーム終了';
+}
+function nextQuestion() {
+  answers = {
+    L: null,
+    R: null
+  };
+  timestamps = {
+    L: 0,
+    R: 0
+  };
+  correctAnswer = null;
+  waiting = true;
+  // 問題作成
+  var q = makeProblem();
+  correctAnswer = q.answer;
+  questionEl.textContent = q.text;
+  questionMirror.textContent = q.text; // 両側に同じ問題
+  status.textContent = '解答を押してください！';
+  progress.textContent = "".concat(current + 1, " / ").concat(totalProblems);
+}
+function makeProblem() {
+  // 一桁の足し算か引き算（0-9）をランダムに作る。ただし答えが1..15に入るようにフィルタ
+  while (true) {
+    var a = Math.floor(Math.random() * 10); // 0..9
+    var b = Math.floor(Math.random() * 10);
+    var op = Math.random() < 0.5 ? '+' : '-';
+    var ans = op === '+' ? a + b : a - b;
+    if (ans >= 1 && ans <= 15) {
+      var text = "".concat(a, " ").concat(op, " ").concat(b, " = ?");
+      return {
+        text: text,
+        answer: ans
+      };
+    }
+    // else 再試行
+  }
+}
+function startGame(problems) {
+  totalProblems = problems;
+  current = 0;
+  score = {
+    L: 0,
+    R: 0
+  };
+  scoreL.textContent = '0';
+  scoreR.textContent = '0';
+  progress.textContent = "0 / ".concat(totalProblems);
+  status.textContent = 'スタート！';
+  winner.classList.add('hidden');
+  // 最初の問題をすぐ出す
+  setTimeout(function () {
+    nextQuestion();
+  }, 400);
+}
+
+// ゲーム終了時にリセットボタンを有効にするため、winnerクリックで閉じる
+winner.addEventListener('click', function () {
+  winner.classList.add('hidden');
+  showStartDialog();
+});
+
+// タッチ時に早く反応するための設定（不要かもしれないが冗長防止）
+document.addEventListener('touchstart', function () {}, {
+  passive: true
+});
+
+// 初期UI
+progress.textContent = "0 / ".concat(totalProblems);
+status.textContent = '準備完了 ? スタートを押してください';
+
+// 初期ダイアログの制御
+function showStartDialog() {
+  startDialog.classList.remove('hidden');
+}
+function hideStartDialog() {
+  startDialog.classList.add('hidden');
+}
+function showCountDownDialog() {
+  countDown.textContent = '3'; // 初期値
+  countDownDialog.classList.remove('hidden');
+}
+function hideCountDownDialog() {
+  countDownDialog.classList.add('hidden');
+}
+function startCountDown(problems) {
+  showCountDownDialog();
+  var count = 2;
+  var _countDownCallback = function countDownCallback() {
+    if (count > 0) {
+      status.textContent = "\u30B2\u30FC\u30E0\u958B\u59CB\u307E\u3067 ".concat(count, "...");
+      countDown.textContent = "".concat(count);
+      count--;
+      setTimeout(_countDownCallback, 1000);
+    } else {
+      status.textContent = "\u30B9\u30BF\u30FC\u30C8";
+      countDown.textContent = "\u30B9\u30BF\u30FC\u30C8";
+      setTimeout(function () {
+        status.textContent = '解答を押してください！';
+        hideCountDownDialog();
+        startGame(problems);
+      }, 1000);
+    }
+  };
+  setTimeout(_countDownCallback, 1000);
+}
+// ゲーム開始時のダイアログから値を反映
+dialogStartBtn.addEventListener('click', function () {
+  var val = Number(dialogProblems.value) || 10;
+  hideStartDialog();
+  startCountDown(val);
+});
+// セレクトボックスの選択肢を生成
+for (var i = 1; i <= 40; i++) {
+  var opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = i;
+  if (i === 10) opt.selected = true;
+  dialogProblems.appendChild(opt);
+}
+// ページロード時にダイアログ表示
+showStartDialog();
+  </script>
+</body>
+</html>
