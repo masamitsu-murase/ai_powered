@@ -155,6 +155,12 @@
       },
       currentIndex: 0,
       totalCount: 45,
+      questions: {
+        addition1: [],
+        addition2: [],
+        subtraction1: [],
+        subtraction2: [],
+      },
     };
 
     function initializeView() {
@@ -164,8 +170,51 @@
         index: 0
       };
       initializeEvents(obj);
+      initializeQuestions();
 
       showSelection()
+    }
+
+    function initializeQuestions() {
+      var addition1Questions = [];
+      var addition2Questions = [];
+      var subtraction1Questions = [];
+      var subtraction2Questions = [];
+
+      var left, right;
+      for (left = 0; left <= 9; left++) {
+        for (right = 0; right <= 9; right++) {
+          var obj = {
+            left: left,
+            right: right,
+            op: '+',
+            answer: left + right,
+          };
+          if (obj.answer <= 10) {
+            addition1Questions.push(obj);
+          }
+          if (obj.answer >= 10) {
+            addition2Questions.push(obj);
+          }
+
+          obj = {
+            left: left + right,
+            right: right,
+            op: '-',
+            answer: left,
+          };
+          if (obj.left <= 10) {
+            subtraction1Questions.push(obj);
+          }
+          if (obj.left >= 10) {
+            subtraction2Questions.push(obj);
+          }
+        }
+      }
+      globalState.questions.addition1 = addition1Questions;
+      globalState.questions.addition2 = addition2Questions;
+      globalState.questions.subtraction1 = subtraction1Questions;
+      globalState.questions.subtraction2 = subtraction2Questions;
     }
 
     function showSelection() {
@@ -217,92 +266,23 @@
       }
     }
 
-    function getNextQuestion(mode) {
-      switch (mode) {
-        case "addition1":
-          var prev = globalState.question;
-          var answer = Math.floor(Math.random() * 10) + 1;
-          var left = Math.floor(Math.random() * (answer + 1));
-          var right = answer - left;
-          for (var i=0; i<20; i++) {
-            left = Math.floor(Math.random() * (answer + 1));
-            right = answer - left;
-            if (prev.left != left || prev.right != right) {
-              break;
-            }
-          }
-          return {
-            left: left,
-            op: '+',
-            right: right,
-            answer: answer,
-          };
-        case "addition2":
-          var prev = globalState.question;
-          var answer = Math.floor(Math.random() * 9) + 10;  // 10-18
-          var min = answer - 9;
-          var left = Math.floor(Math.random() * (9 - min + 1)) + min;
-          var right = answer - left;
-          for (var i=0; i<20; i++) {
-            left = Math.floor(Math.random() * (9 - min + 1)) + min;
-            right = answer - left;
-            if (answer == 18 || prev.left != left || prev.right != right) {
-              break;
-            }
-          }
-          return {
-            left: left,
-            op: '+',
-            right: right,
-            answer: answer,
-          };
-        case "subtraction1":
-          var prev = globalState.question;
-          var left = Math.floor(Math.random() * 10) + 1;
-          var answer = Math.floor(Math.random() * (left + 1));
-          var right = left - answer;
-          for (var i=0; i<20; i++) {
-            answer = Math.floor(Math.random() * (left + 1));
-            right = left - answer;
-            if (prev.left != left || prev.right != right) {
-              break;
-            }
-          }
-          return {
-            left: left,
-            op: '-',
-            right: right,
-            answer: answer,
-          };
-        case "subtraction2":
-          var prev = globalState.question;
-          var left = Math.floor(Math.random() * 9) + 10;  // 10-18
-          var min = left - 9;
-          var answer = Math.floor(Math.random() * (9 - min + 1)) + min;
-          var right = left - answer;
-          for (var i=0; i<20; i++) {
-            answer = Math.floor(Math.random() * (9 - min + 1)) + min;
-            right = left - answer;
-            if (left == 18 || prev.left != left || prev.right != right) {
-              break;
-            }
-          }
-          return {
-            left: left,
-            op: '-',
-            right: right,
-            answer: answer,
-          };
-        default:
-          console.error("Unknown question mode:", globalState.questionMode);
-          break;
+    function shuffleQuestions(questions) {
+      for (var loop = 0; loop < 3; loop++) {
+        var i = questions.length - 1;
+        for (; i > 0; i--) {
+          var j = Math.floor(Math.random() * i);
+          var x = questions[i];
+          questions[i] = questions[j];
+          questions[j] = x;
+        }
       }
-
     }
 
     function startQuestion(player) {
       globalState.state = "playing";
       globalState.currentIndex = 0;
+
+      shuffleQuestions(globalState.questions[globalState.questionMode]);
 
       var buttons = player.root.querySelectorAll('.button button');
       for (var i = 0; i < buttons.length; i++) {
@@ -310,7 +290,7 @@
         buttons[i].classList.remove("wrong");
       }
 
-      globalState.question = getNextQuestion(globalState.questionMode);
+      globalState.question = globalState.questions[globalState.questionMode][0];
       showQuestion(player, "" + globalState.question.left + globalState.question.op + globalState.question.right,
                    "?", globalState.currentIndex, globalState.totalCount);
     }
@@ -333,7 +313,7 @@
         return;
       }
 
-      globalState.question = getNextQuestion(globalState.questionMode);
+      globalState.question = globalState.questions[globalState.questionMode][globalState.currentIndex];
       showQuestion(player, "" + globalState.question.left + globalState.question.op + globalState.question.right,
                    "?", globalState.currentIndex, globalState.totalCount);
     }
