@@ -28,6 +28,7 @@
     }
     .header > div {
       position: absolute;
+      white-space: pre;
       font-size: calc((100vw - 320px) / 140 + 60px);
       line-height: 20vh;
       top: 0px;
@@ -39,15 +40,10 @@
       left: 0px;
       width: 50%;
     }
-    .header .equal {
-      text-align: center;
-      left: 50%;
-      width: 10%;
-    }
-    .header .answer {
+    .header .equal_answer {
       text-align: left;
-      left: 60%;
-      width: 20%;
+      left: 50%;
+      width: 50%;
     }
 
     .header .total {
@@ -182,8 +178,8 @@
       var subtraction2Questions = [];
 
       var left, right;
-      for (left = 0; left <= 9; left++) {
-        for (right = 0; right <= 9; right++) {
+      for (left = 1; left <= 9; left++) {
+        for (right = 1; right <= 9; right++) {
           var obj = {
             left: left,
             right: right,
@@ -193,7 +189,7 @@
           if (obj.answer <= 10) {
             addition1Questions.push(obj);
           }
-          if (obj.answer >= 10) {
+          if (obj.answer >= 11) {
             addition2Questions.push(obj);
           }
 
@@ -206,7 +202,7 @@
           if (obj.left <= 10) {
             subtraction1Questions.push(obj);
           }
-          if (obj.left >= 10) {
+          if (obj.left >= 11) {
             subtraction2Questions.push(obj);
           }
         }
@@ -267,14 +263,12 @@
     }
 
     function shuffleQuestions(questions) {
-      for (var loop = 0; loop < 3; loop++) {
-        var i = questions.length - 1;
-        for (; i > 0; i--) {
-          var j = Math.floor(Math.random() * i);
-          var x = questions[i];
-          questions[i] = questions[j];
-          questions[j] = x;
-        }
+      var i = questions.length - 1;
+      for (; i > 0; i--) {
+        var j = Math.floor(Math.random() * i);
+        var x = questions[i];
+        questions[i] = questions[j];
+        questions[j] = x;
       }
     }
 
@@ -291,8 +285,7 @@
       }
 
       globalState.question = globalState.questions[globalState.questionMode][0];
-      showQuestion(player, "" + globalState.question.left + globalState.question.op + globalState.question.right,
-                   "?", globalState.currentIndex, globalState.totalCount);
+      showQuestion(player, globalState.question, "?", globalState.currentIndex, globalState.totalCount);
     }
 
     function nextQuestion(player) {
@@ -314,18 +307,15 @@
       }
 
       globalState.question = globalState.questions[globalState.questionMode][globalState.currentIndex];
-      showQuestion(player, "" + globalState.question.left + globalState.question.op + globalState.question.right,
-                   "?", globalState.currentIndex, globalState.totalCount);
+      showQuestion(player, globalState.question, "?", globalState.currentIndex, globalState.totalCount);
     }
 
     function showQuestion(player, question, answer, currentIndex, totalCount) {
       var questionDiv = player.root.querySelector('.header .question');
-      var equalDiv = player.root.querySelector('.header .equal');
-      var answerDiv = player.root.querySelector('.header .answer');
+      var equalDiv = player.root.querySelector('.header .equal_answer');
       var totalDiv = player.root.querySelector('.header .total');
-      questionDiv.textContent = question;
-      equalDiv.textContent = "=";
-      answerDiv.textContent = answer;
+      questionDiv.textContent = "" + question.left + " " + question.op + " " + question.right;
+      equalDiv.textContent = " = " + answer;
       totalDiv.textContent = "" + (currentIndex + 1) + "/" + totalCount;
 
       var messageDiv = document.querySelector('#message');
@@ -356,9 +346,14 @@
       }
 
       var selectMode = function(mode) {
+        if (!(mode in globalState.questions)) {
+          console.log('Invalid mode selected:', mode);
+          return;
+        }
+
         globalState.questionMode = mode;
         globalState.currentIndex = 0;
-        globalState.totalCount = 45;
+        globalState.totalCount = globalState.questions[mode].length;
         globalState.state = "countDown";
         var count = 3;
         var countDown = function() {
@@ -367,7 +362,6 @@
             count--;
             setTimeout(countDown, 1000);
           } else {
-            globalState.state = "playing";
             startQuestion(player);
           }
         };
@@ -416,41 +410,40 @@
 <body>
   <div class="player">
     <div class="header">
-      <div class="question">1+2</div>
-      <div class="equal">=</div>
-      <div class="answer">3</div>
-      <div class="total">1/10</div>
+      <div class="question"></div>
+      <div class="equal_answer"></div>
+      <div class="total"></div>
     </div>
     <div class="operation">
       <table class="buttonTable">
         <tbody>
           <tr>
-            <td class="button" data-value="0"><button>0</button></td>
             <td class="button" data-value="1"><button>1</button></td>
             <td class="button" data-value="2"><button>2</button></td>
             <td class="button" data-value="3"><button>3</button></td>
             <td class="button" data-value="4"><button>4</button></td>
+            <td class="button" data-value="5"><button>5</button></td>
           </tr>
           <tr>
-            <td class="button" data-value="5"><button>5</button></td>
             <td class="button" data-value="6"><button>6</button></td>
             <td class="button" data-value="7"><button>7</button></td>
             <td class="button" data-value="8"><button>8</button></td>
             <td class="button" data-value="9"><button>9</button></td>
+            <td class="button" data-value="10"><button>10</button></td>
           </tr>
           <tr>
-            <td class="button" data-value="10"><button>10</button></td>
             <td class="button" data-value="11"><button>11</button></td>
             <td class="button" data-value="12"><button>12</button></td>
             <td class="button" data-value="13"><button>13</button></td>
             <td class="button" data-value="14"><button>14</button></td>
+            <td class="button" data-value="15"><button>15</button></td>
           </tr>
           <tr>
-            <td class="button" data-value="15"><button>15</button></td>
             <td class="button" data-value="16"><button>16</button></td>
             <td class="button" data-value="17"><button>17</button></td>
             <td class="button" data-value="18"><button>18</button></td>
             <td class="button" data-value="19"><button>19</button></td>
+            <td class="button" data-value="20"><button>20</button></td>
           </tr>
         </tbody>
       </table>
