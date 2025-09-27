@@ -148,6 +148,7 @@
 
     var globalState = {
       state: "initial",
+      startTime: null,
       questionMode: "addition1",
       question: {
         left: 0,
@@ -279,6 +280,23 @@
       }
     }
 
+    function saveLog(questionMode, startTime, elapsedSeconds) {
+      console.log("Log saved:", questionMode, startTime, elapsedSeconds);
+      var log = localStorage.getItem('math_game_logs');
+      log = log ? JSON.parse(log) : [];
+      log.push({
+        questionMode: questionMode,
+        startTime: startTime,
+        elapsedSeconds: elapsedSeconds
+      });
+      localStorage.setItem('math_game_logs', JSON.stringify(log));
+    }
+
+    function getLogs() {
+      var log = localStorage.getItem('math_game_logs');
+      return log ? JSON.parse(log) : [];
+    }
+
     function startQuestion(player) {
       globalState.state = "playing";
       globalState.currentIndex = 0;
@@ -292,6 +310,7 @@
       }
 
       globalState.question = globalState.questions[globalState.questionMode][0];
+      globalState.startTime = Date.now();
       showQuestion(player, globalState.question, "?", globalState.currentIndex, globalState.totalCount);
     }
 
@@ -305,7 +324,10 @@
       globalState.currentIndex++;
       if (globalState.currentIndex >= globalState.totalCount) {
         globalState.state = "finished";
-        showMessage("よくできました！");
+        var endTime = Date.now();
+        var elapsedSeconds = Math.floor((endTime - globalState.startTime) / 1000);
+        saveLog(globalState.questionMode, globalState.startTime, elapsedSeconds)
+        showMessage("よくできました！ " + elapsedSeconds + "秒" + " " + getLogs().length + "かい");
         setTimeout(function() {
           globalState.state = "initial";
           showSelection();
