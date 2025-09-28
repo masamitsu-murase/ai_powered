@@ -166,8 +166,6 @@
       margin: 2em 0px 1em 0px;
     }
     #result .logTable {
-      display: none;
-
       margin: 1em auto;
       border-collapse: collapse;
       width: 80%;
@@ -388,8 +386,6 @@
     }
 
     function saveLog(questionMode, startTime, elapsedSeconds) {
-      return;
-
       var maxLogCount = 5;
       console.log("Log saved:", questionMode, startTime, elapsedSeconds);
       try {
@@ -422,8 +418,6 @@
     }
 
     function getLogs(questionMode) {
-      return [];
-
       try {
         var log = localStorage.getItem('math_game_logs');
         if (log == null) {
