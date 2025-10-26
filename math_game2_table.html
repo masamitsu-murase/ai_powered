@@ -171,6 +171,9 @@
       width: 80%;
       max-width: 600px;
     }
+    #result .logTable.no_log {
+      display: none;
+    }
     #result .logTable tr th, #result .logTable tr td {
       border: 1px solid var(--text);
       padding: 0.1em 1em;
@@ -190,6 +193,126 @@
   </style>
 
   <script type="text/javascript">
+    var addition2MatchingRule = function(left, op, right) {
+      if (op !== '+') {
+        return false;
+      }
+      if (left >= 10 || right >= 10) {
+        return false;
+      }
+      if (left + right <= 10) {
+        return false;
+      }
+      return true;
+    };
+
+    var questionsInfo = {
+      addition1: {
+        name: "たしざん①",
+        showLog: true,
+        matchingRule: function(left, op, right) {
+          if (op !== '+') {
+            return false;
+          }
+          if (left + right > 10) {
+            return false;
+          }
+          return true;
+        },
+      },
+      addition2: {
+        name: "たしざん②",
+        showLog: true,
+        matchingRule: function(left, op, right) {
+          return addition2MatchingRule(left, op, right);
+        },
+      },
+      addition2_9: {
+        name: "たしざん② 9+□",
+        showLog: false,
+        matchingRule: function(left, op, right) {
+          if (left != 9) {
+            return false;
+          }
+          return addition2MatchingRule(left, op, right);
+        },
+      },
+      addition2_8: {
+        name: "たしざん② 8+□",
+        showLog: false,
+        matchingRule: function(left, op, right) {
+          if (left != 8) {
+            return false;
+          }
+          return addition2MatchingRule(left, op, right);
+        },
+      },
+      addition2_7: {
+        name: "たしざん② 7+□",
+        showLog: false,
+        matchingRule: function(left, op, right) {
+          if (left != 7) {
+            return false;
+          }
+          return addition2MatchingRule(left, op, right);
+        },
+      },
+      addition2_65: {
+        name: "たしざん② 6+□, 5+□",
+        showLog: false,
+        matchingRule: function(left, op, right) {
+          if (left != 6 && left != 5) {
+            return false;
+          }
+          return addition2MatchingRule(left, op, right);
+        },
+      },
+      addition2_432: {
+        name: "たしざん② 4+□, 3+□, 2+□",
+        showLog: false,
+        matchingRule: function(left, op, right) {
+          if (left != 4 && left != 3 && left != 2) {
+            return false;
+          }
+          return addition2MatchingRule(left, op, right);
+        },
+      },
+      subtraction1: {
+        name: "ひきざん①",
+        showLog: true,
+        matchingRule: function(left, op, right) {
+          if (op !== '-') {
+            return false;
+          }
+          if (left - right <= 0) {
+            return false;
+          }
+          if (left > 10) {
+            return false;
+          }
+          return true;
+        },
+      },
+      subtraction2: {
+        name: "ひきざん②",
+        showLog: true,
+        matchingRule: function(left, op, right) {
+          if (op !== '-') {
+            return false;
+          }
+          if (left - right <= 0 || left - right >= 10) {
+            return false;
+          }
+          if (left <= 10) {
+            return false;
+          }
+          if (right >= 10) {
+            return false;
+          }
+          return true;
+        },
+      },
+    }
 
     var globalState = {
       state: "initial",
@@ -204,10 +327,6 @@
       currentIndex: 0,
       totalCount: 45,
       questions: {
-        addition1: [],
-        addition2: [],
-        subtraction1: [],
-        subtraction2: [],
       },
     };
 
@@ -238,45 +357,25 @@
     }
 
     function initializeQuestions() {
-      var addition1Questions = [];
-      var addition2Questions = [];
-      var subtraction1Questions = [];
-      var subtraction2Questions = [];
-
-      var left, right;
-      for (left = 1; left <= 9; left++) {
-        for (right = 1; right <= 9; right++) {
-          var obj = {
-            left: left,
-            right: right,
-            op: '+',
-            answer: left + right,
-          };
-          if (obj.answer <= 10) {
-            addition1Questions.push(obj);
-          }
-          if (obj.answer >= 11) {
-            addition2Questions.push(obj);
-          }
-
-          obj = {
-            left: left + right,
-            right: right,
-            op: '-',
-            answer: left,
-          };
-          if (obj.left <= 10) {
-            subtraction1Questions.push(obj);
-          }
-          if (obj.left >= 11) {
-            subtraction2Questions.push(obj);
+      var left, right, op;
+      for (left = 1; left <= 18; left++) {
+        for (right = 1; right <= 18; right++) {
+          for (op of ['+', '-']) {
+            for (info in questionsInfo) {
+              if (questionsInfo[info].matchingRule(left, op, right)) {
+                var questionObj = {
+                  left: left,
+                  right: right,
+                  op: op,
+                  answer: (op === '+') ? (left + right) : (left - right),
+                };
+                globalState.questions[info] = globalState.questions[info] || [];
+                globalState.questions[info].push(questionObj);
+              }
+            }
           }
         }
       }
-      globalState.questions.addition1 = addition1Questions;
-      globalState.questions.addition2 = addition2Questions;
-      globalState.questions.subtraction1 = subtraction1Questions;
-      globalState.questions.subtraction2 = subtraction2Questions;
     }
 
     function showSelection() {
@@ -307,39 +406,45 @@
       var selectionDiv = document.querySelector('#selection');
       selectionDiv.classList.remove('show');
 
-      var questionText = {
-        addition1: "たしざん①",
-        addition2: "たしざん②",
-        subtraction1: "ひきざん①",
-        subtraction2: "ひきざん②",
-      }
+      var info = questionsInfo[questionMode];
       var resultDiv = document.querySelector('#result');
       resultDiv.classList.add('show');
-      var textDiv = resultDiv.querySelector('#result .text');
-      textDiv.textContent = questionText[questionMode] + " " + elapsedSeconds + "びょう";
 
+      var logTable = resultDiv.querySelector('.logTable');
       var tbody = resultDiv.querySelector('.logTable tbody');
       while (tbody.firstChild) {
         tbody.removeChild(tbody.firstChild);
       }
 
-      var i = 0;
-      for (; i < logs.length; i++) {
-        var tr = document.createElement('tr');
+      if (info.showLog) {
+        var textDiv = resultDiv.querySelector('#result .text');
+        textDiv.textContent = info.name + " " + elapsedSeconds + "びょう";
 
-        var td1 = document.createElement('td');
-        td1.textContent = logs[i].elapsedSeconds + "びょう";
-        tr.appendChild(td1);
+        logTable.classList.remove('no_log');
 
-        var td2 = document.createElement('td');
-        var dt = logs[i].startTime;
-        var y = dt.getFullYear();
-        var m = dt.getMonth() + 1;
-        var d = dt.getDate();
-        td2.textContent = y + "ねん" + m + "がつ" + d + "にち";
-        tr.appendChild(td2);
+        var i = 0;
+        for (; i < logs.length; i++) {
+          var tr = document.createElement('tr');
 
-        tbody.appendChild(tr);
+          var td1 = document.createElement('td');
+          td1.textContent = logs[i].elapsedSeconds + "びょう";
+          tr.appendChild(td1);
+
+          var td2 = document.createElement('td');
+          var dt = logs[i].startTime;
+          var y = dt.getFullYear();
+          var m = dt.getMonth() + 1;
+          var d = dt.getDate();
+          td2.textContent = y + "ねん" + m + "がつ" + d + "にち";
+          tr.appendChild(td2);
+
+          tbody.appendChild(tr);
+        }
+      } else {
+        var textDiv = resultDiv.querySelector('#result .text');
+        textDiv.textContent = "おつかれさまでした。";
+
+        logTable.classList.add('no_log');
       }
     }
 
@@ -533,38 +638,21 @@
         countDown();
       };
 
-      var addition1Button = document.querySelector('#addition1');
-      addition1Button.addEventListener('click', function() {
-        selectMode("addition1");
-      });
-      addition1Button.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        selectMode("addition1");
-      });
-      var addition2Button = document.querySelector('#addition2');
-      addition2Button.addEventListener('click', function() {
-        selectMode("addition2");
-      });
-      addition2Button.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        selectMode("addition2");
-      });
-      var subtraction1Button = document.querySelector('#subtraction1');
-      subtraction1Button.addEventListener('click', function() {
-        selectMode("subtraction1");
-      });
-      subtraction1Button.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        selectMode("subtraction1");
-      });
-      var subtraction2Button = document.querySelector('#subtraction2');
-      subtraction2Button.addEventListener('click', function() {
-        selectMode("subtraction2");
-      });
-      subtraction2Button.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        selectMode("subtraction2");
-      });
+      var questionMode;
+      for (questionMode in questionsInfo) {
+        (function(mode) {
+          var button = document.querySelector('#' + mode);
+          if (button) {
+            button.addEventListener('click', function() {
+              selectMode(mode);
+            });
+            button.addEventListener('touchstart', function(e) {
+              e.preventDefault();
+              selectMode(mode);
+            });
+          }
+        })(questionMode);
+      }
 
       var retryButton = document.querySelector('#result .retry');
       retryButton.addEventListener('click', function(e) {
@@ -624,6 +712,11 @@
     <div class="mode">
       <button id="addition1">たしざん①</button>
       <button id="addition2">たしざん②</button>
+      <button id="addition2_9">たしざん② 9+□</button>
+      <button id="addition2_8">たしざん② 8+□</button>
+      <button id="addition2_7">たしざん② 7+□</button>
+      <button id="addition2_65">たしざん② 6+□, 5+□</button>
+      <button id="addition2_432">たしざん② 4+□, 3+□, 2+□</button>
       <button id="subtraction1">ひきざん①</button>
       <button id="subtraction2">ひきざん②</button>
     </div>
