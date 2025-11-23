@@ -403,6 +403,7 @@
     function showResult(questionMode, startTime, elapsedSeconds, logs) {
       try {
         completionAudio.currentTime = 0;
+        completionAudio.volume = 1;
         completionAudio.play().catch(function(err) {
           console.log("Error playing completion audio:", err);
         });
@@ -467,6 +468,7 @@
         button.classList.add("correct");
         try {
           correctAudio.currentTime = 0;
+          correctAudio.volume = 1;
           correctAudio.play().catch(function(err) {
             console.log("Error playing correct audio:", err);
           });
@@ -480,6 +482,7 @@
         button.classList.add("wrong");
         try {
           wrongAudio.currentTime = 0;
+          wrongAudio.volume = 1;
           wrongAudio.play().catch(function(err) {
             console.log("Error playing wrong audio:", err);
           });
@@ -634,8 +637,14 @@
         globalState.currentIndex = 0;
         globalState.totalCount = globalState.questions[mode].length;
         globalState.state = "countDown";
-        completionAudio.currentTime = 0;
-        completionAudio.play();
+
+        // Hacking for iPad to allow audio playback
+        for (var audio of [correctAudio, wrongAudio, completionAudio]) {
+          audio.currentTime = 0;
+          audio.volume = 0;
+          audio.play();
+        }
+
         var count = 3;
         var countDown = function() {
           if (count > 0) {
