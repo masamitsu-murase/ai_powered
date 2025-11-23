@@ -634,6 +634,8 @@
         globalState.currentIndex = 0;
         globalState.totalCount = globalState.questions[mode].length;
         globalState.state = "countDown";
+        completionAudio.currentTime = 0;
+        completionAudio.play();
         var count = 3;
         var countDown = function() {
           if (count > 0) {
