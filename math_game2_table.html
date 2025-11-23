@@ -401,10 +401,15 @@
     }
 
     function showResult(questionMode, startTime, elapsedSeconds, logs) {
+      try {
       completionAudio.currentTime = 0;
       completionAudio.play().catch(function(err) {
         console.log("Error playing completion audio:", err);
       });
+      } catch (e) {
+        alert("Error playing completion audio:");
+        alert(e.message);
+      }
 
       var messageDiv = document.querySelector('#message');
       messageDiv.classList.remove('show');
