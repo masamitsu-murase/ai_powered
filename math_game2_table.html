@@ -401,8 +401,6 @@
     }
 
     function showResult(questionMode, startTime, elapsedSeconds, logs) {
-      playSound(completionAudio);
-
       var messageDiv = document.querySelector('#message');
       messageDiv.classList.remove('show');
       var selectionDiv = document.querySelector('#selection');
@@ -459,6 +457,10 @@
       if (globalState.question.answer === value) {
         button.classList.add("correct");
         playSound(correctAudio);
+
+        if (globalState.currentIndex === globalState.totalCount - 1) {
+          playSound(completionAudio, 0.2);
+        }
         setTimeout(function() {
           nextQuestion(player);
         }, 200);
@@ -583,7 +585,7 @@
       selectionDiv.classList.remove('show');
     }
 
-    function playSound(audioData) {
+    function playSound(audioData, when) {
       if (!audioData || !audioData.buffer || !audioData.context) {
         return;
       }
@@ -591,7 +593,7 @@
       var source = context.createBufferSource();
       source.buffer = audioData.buffer;
       source.connect(context.destination);
-      source.start(0);
+      source.start(when || 0);
     }
 
     function initializeEvents(player) {
