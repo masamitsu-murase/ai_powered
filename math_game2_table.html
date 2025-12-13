@@ -124,13 +124,16 @@
       justify-content: center;
       align-items: center;
     }
-    #message .text, #selection .mode {
+    #selection > div {
+      display: block;
+    }
+    #message .text, #selection .mode, #selection .menu {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
     }
 
-    #selection .mode button {
+    #selection .mode button, #selection .menu button {
       display: block;
       margin: 10px;
       padding: 20px;
@@ -138,6 +141,15 @@
       border-width: 2px;
       border-color: transparent;
       font-size: calc((100vw - 320px) / 140 + 30px);
+      color: var(--text);
+      background-color: var(--bg-button);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+    }
+    #selection .menu select {
+      border-radius: 10%;
+      border-width: 2px;
+      border-color: var(--text);
+      font-size: calc((100vw - 320px) / 140 + 20px);
       color: var(--text);
       background-color: var(--bg-button);
       box-shadow: 0 6px 12px rgba(0,0,0,0.5);
@@ -400,7 +412,7 @@
       textDiv.textContent = message;
     }
 
-    function showResult(questionMode, startTime, elapsedSeconds, logs) {
+    function showResult(questionMode, elapsedSeconds, logs) {
       var messageDiv = document.querySelector('#message');
       messageDiv.classList.remove('show');
       var selectionDiv = document.querySelector('#selection');
@@ -418,7 +430,11 @@
 
       if (info.showLog) {
         var textDiv = resultDiv.querySelector('#result .text');
-        textDiv.textContent = info.name + " " + elapsedSeconds + "びょう";
+        if (elapsedSeconds !== null) {
+          textDiv.textContent = info.name + " " + elapsedSeconds + "びょう";
+        } else {
+          textDiv.textContent = info.name;
+        }
 
         logTable.classList.remove('no_log');
 
@@ -562,7 +578,7 @@
         var elapsedSeconds = Math.floor((endTime - globalState.startTime.getTime()) / 1000);
         saveLog(globalState.questionMode, globalState.startTime, elapsedSeconds)
         var logs = getLogs(globalState.questionMode);
-        showResult(globalState.questionMode, globalState.startTime, elapsedSeconds, logs);
+        showResult(globalState.questionMode, elapsedSeconds, logs);
         return;
       }
 
@@ -656,6 +672,26 @@
         })(questionMode);
       }
 
+      var recordSelect = document.querySelector('#recordSelect');
+      for (questionMode in questionsInfo) {
+        if (!questionsInfo[questionMode].showLog) {
+          continue;
+        }
+        (function(mode) {
+          var option = document.createElement('option');
+          option.value = mode;
+          option.textContent = questionsInfo[mode].name;
+          recordSelect.appendChild(option);
+        })(questionMode);
+      }
+      var recordButton = document.querySelector('#record');
+      recordButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        const mode = recordSelect.value;
+        var logs = getLogs(mode);
+        showResult(mode, null, logs);
+      });
+
       var retryButton = document.querySelector('#result .retry');
       retryButton.addEventListener('click', function(e) {
         e.preventDefault();
@@ -711,18 +747,23 @@
     </div>
   </div>
   <div id="selection" class="show">
-    <div class="mode">
-      <button id="addition1">たしざん①</button>
-      <button id="addition2">たしざん②</button>
-      <!--
-      <button id="addition2_9">たしざん② 9+□</button>
-      <button id="addition2_8">たしざん② 8+□</button>
-      <button id="addition2_7">たしざん② 7+□</button>
-      <button id="addition2_65">たしざん② 6+□, 5+□</button>
-      <button id="addition2_432">たしざん② 4+□, 3+□, 2+□</button>
-      -->
-      <button id="subtraction1">ひきざん①</button>
-      <button id="subtraction2">ひきざん②</button>
+    <div>
+      <div class="mode">
+        <button id="addition1">たしざん①</button>
+        <button id="addition2">たしざん②</button>
+        <!--
+        <button id="addition2_9">たしざん② 9+□</button>
+        <button id="addition2_8">たしざん② 8+□</button>
+        <button id="addition2_7">たしざん② 7+□</button>
+        <button id="addition2_65">たしざん② 6+□, 5+□</button>
+        <button id="addition2_432">たしざん② 4+□, 3+□, 2+□</button>
+        -->
+        <button id="subtraction1">ひきざん①</button>
+        <button id="subtraction2">ひきざん②</button>
+      </div>
+      <div class="menu">
+        <select id="recordSelect"></select><button id="record">の きろくを見る</button>
+      </div>
     </div>
   </div>
   <div id="message"><div class="text"></div></div>
